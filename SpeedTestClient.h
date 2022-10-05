@@ -16,15 +16,16 @@
 #include <unistd.h>
 #include "SpeedTest.h"
 #include "DataTypes.h"
-class SpeedTestClient {
+class SpeedTestClient
+{
 public:
     explicit SpeedTestClient(const ServerInfo& serverInfo);
     ~SpeedTestClient();
 
     bool connect();
-    bool ping(long &millisec);
-    bool upload(long size, long chunk_size, long &millisec);
-    bool download(long size, long chunk_size, long &millisec);
+    bool ping(long& millisec);
+    bool upload(long size, long chunk_size, long& millisec);
+    bool download(long size, long chunk_size, long& millisec);
     float version();
     const std::pair<std::string, int> hostport();
     void close();
@@ -39,5 +40,5 @@ private:
     static bool writeLine(int& fd, const std::string& buffer);
 };
 
-typedef bool (SpeedTestClient::*opFn)(const long size, const long chunk_size, long &millisec);
-#endif //SPEEDTEST_SPEEDTESTCLIENT_H
+typedef bool (SpeedTestClient::*opFn)(const long size, const long chunk_size, long& millisec);
+#endif // SPEEDTEST_SPEEDTESTCLIENT_H
