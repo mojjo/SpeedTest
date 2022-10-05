@@ -530,7 +530,10 @@ bool SpeedTest::fetchServers(const std::string& url, std::vector<ServerInfo>& ta
     auto cres = httpGet(url, oss, curl, 20);
 
     if (cres != CURLE_OK)
+    {
+        std::cerr << "Unable to fetch servers, curl error code: " << cres << std::endl;
         return false;
+    }
 
     if (isHttpSchema)
     {
@@ -574,7 +577,7 @@ bool SpeedTest::fetchServers(const std::string& url, std::vector<ServerInfo>& ta
     }
     else
     {
-        std::cerr << "Unable to initialize xml parser" << std::endl;
+        std::cerr << "Unable to initialize json parser" << std::endl;
         curl_easy_cleanup(curl);
         return false;
     }
