@@ -476,6 +476,49 @@ ServerInfo SpeedTest::processServerXMLNode(xmlTextReaderPtr reader)
     return ServerInfo();
 }
 
+ServerInfo SpeedTest::processServerJSONNode(nlohmann::json::reference& ref)
+{
+    auto info = ServerInfo();
+    auto server_url = ref["url"];
+    auto server_lat = ref["lat"];
+    auto server_lon = ref["lon"];
+    auto server_name = ref["name"];
+    auto server_county = ref["country"];
+    auto server_cc = ref["cc"];
+    auto server_host = ref["host"];
+    auto server_id = ref["id"];
+    auto server_sponsor = ref["sponsor"];
+
+    if (!server_name.is_null())
+        info.name.append(server_name.get<std::string>());
+
+    if (!server_url.is_null())
+        info.url.append(server_url.get<std::string>());
+
+    if (!server_county.is_null())
+        info.country.append(server_county.get<std::string>());
+
+    if (!server_cc.is_null())
+        info.country_code.append(server_cc.get<std::string>());
+
+    if (!server_host.is_null())
+        info.host.append(server_host.get<std::string>());
+
+    if (!server_sponsor.is_null())
+        info.sponsor.append(server_sponsor.get<std::string>());
+
+    if (!server_id.is_null())
+        info.id = std::stoi(server_id.get<std::string>());
+
+    if (!server_lat.is_null())
+        info.lat = std::stof(server_lat.get<std::string>());
+
+    if (!server_lon.is_null())
+        info.lon = std::stof(server_lon.get<std::string>());
+
+    return info;
+}
+
 bool SpeedTest::fetchServers(const std::string& url, std::vector<ServerInfo>& target, int& http_code)
 {
     std::stringstream oss;
@@ -506,61 +549,37 @@ bool SpeedTest::fetchServers(const std::string& url, std::vector<ServerInfo>& ta
         http_code = 200;
     }
 
-    size_t len = oss.str().length();
-    auto* xmlbuff = (char*)calloc(len + 1, sizeof(char));
-    if (!xmlbuff)
-    {
-        std::cerr << "Unable to calloc" << std::endl;
-        curl_easy_cleanup(curl);
-        return false;
-    }
-    memcpy(xmlbuff, oss.str().c_str(), len);
-    oss.str("");
+    // Parse the input
+    nlohmann::json j = nlohmann::json::parse(oss.str());
 
-    xmlTextReaderPtr reader = xmlReaderForMemory(xmlbuff, static_cast<int>(len), nullptr, nullptr, 0);
-
-    if (reader != nullptr)
+    if (!j.empty())
     {
         IPInfo ipInfo;
         if (!SpeedTest::ipInfo(ipInfo))
         {
             curl_easy_cleanup(curl);
-            free(xmlbuff);
-            xmlFreeTextReader(reader);
             std::cerr << "OOPS!" << std::endl;
             return false;
         }
-        auto ret = xmlTextReaderRead(reader);
-        while (ret == 1)
+
+        for (auto it : j)
         {
-            ServerInfo info = processServerXMLNode(reader);
+            ServerInfo info = processServerJSONNode(it);
             if (!info.url.empty())
             {
                 info.distance = harversine(std::make_pair(ipInfo.lat, ipInfo.lon), std::make_pair(info.lat, info.lon));
                 target.push_back(info);
             }
-            ret = xmlTextReaderRead(reader);
-        }
-        xmlFreeTextReader(reader);
-        if (ret != 0)
-        {
-            curl_easy_cleanup(curl);
-            free(xmlbuff);
-            std::cerr << "Failed to parse" << std::endl;
-            return false;
         }
     }
     else
     {
         std::cerr << "Unable to initialize xml parser" << std::endl;
         curl_easy_cleanup(curl);
-        free(xmlbuff);
         return false;
     }
 
     curl_easy_cleanup(curl);
-    free(xmlbuff);
-    xmlCleanupParser();
     std::sort(target.begin(), target.end(),
               [](const ServerInfo& a, const ServerInfo& b) -> bool { return a.distance < b.distance; });
     return true;

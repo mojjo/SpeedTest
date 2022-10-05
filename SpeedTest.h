@@ -20,6 +20,7 @@
 #include <thread>
 #include <mutex>
 #include "DataTypes.h"
+#include "json.hpp"
 
 class SpeedTestClient;
 typedef bool (SpeedTestClient::*opFn)(const long size, const long chunk_size, long& millisec);
@@ -57,6 +58,7 @@ private:
     static CURL* curl_setup(CURL* curl = nullptr);
     static size_t writeFunc(void* buf, size_t size, size_t nmemb, void* userp);
     static ServerInfo processServerXMLNode(xmlTextReaderPtr reader);
+    static ServerInfo processServerJSONNode(nlohmann::json::reference& ref);
     double execute(const ServerInfo& server, const TestConfig& config, const opFn& fnc,
                    std::function<void(bool)> cb = nullptr);
     template <typename T>
