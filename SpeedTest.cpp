@@ -58,6 +58,7 @@ const std::vector<ServerInfo>& SpeedTest::serverList()
     int http_code = 0;
     if (fetchServers(SPEED_TEST_SERVER_LIST_URL, mServerList, http_code) && http_code == 200)
     {
+        std::cout << "Fetch servers error code: " << http_code << std::endl;
         return mServerList;
     }
     return mServerList;
